@@ -1,0 +1,32 @@
+import 'dart:math' ;
+
+void main() {
+        double raio = 5.75;
+        var  circ = raio * raio * pi;
+        
+      print('area total $circ');
+}
+--------------------------------------------
+void main() {
+  
+  final now = DateTime.now();
+  int atual = now.month; 
+  
+  
+  if (atual == 7) {
+    print('mes atual');
+  } else {
+    print('mes errado');
+  }
+}
+------------------------------------------------
+(EX 03 INCOMPLETO)
+void main(){
+      
+    final now = DateTime.now();
+    final DiaSemana = DateTime.utc(2025, 7, 29);
+  
+     for(var i =1 <DiaSemana;i<weekday;i++){
+       
+     }
+}
