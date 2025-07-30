@@ -1,8 +1,0 @@
-import 'dart:math' ;
-
-void main() {
-        double raio = 5.75;
-        var  circ = raio * raio * pi;
-        
-      print('area total $circ');
-}
