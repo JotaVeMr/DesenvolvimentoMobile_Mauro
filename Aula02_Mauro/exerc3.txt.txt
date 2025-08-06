@@ -1,0 +1,24 @@
+class Aluno {
+  String nome;
+  String matricula;
+  List<double> notas; 
+
+  Aluno(this.nome, this.matricula, this.notas);
+
+  void lancaNota(double nota) {
+    notas.add(nota);
+  }
+}
+
+void main() {
+  Aluno aluno = Aluno("Fulano de Tal", "123456", []);
+
+  aluno.lancaNota(6.3);
+  aluno.lancaNota(8.5);
+  aluno.lancaNota(7.0);
+
+  
+  print('Aluno: ${aluno.nome}');
+  print('Matrícula: ${aluno.matricula}');
+  print('Notas: ${aluno.notas}');
+}

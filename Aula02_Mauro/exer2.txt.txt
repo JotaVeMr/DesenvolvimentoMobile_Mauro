@@ -1,0 +1,14 @@
+class Aluno {
+  String nome;
+  String matricula;
+  List<int> notas; 
+
+  Aluno(this.nome, this.matricula, this.notas);
+}
+
+void main() {
+  
+  Aluno aluno = Aluno("Fulano de Tal", "123456", []);
+
+  
+}
