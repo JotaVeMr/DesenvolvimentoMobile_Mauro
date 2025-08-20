@@ -1,0 +1,227 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+void main() {
+  runApp(const FlashcardApp());
+}
+
+/// Data model for a single verb flashcard.
+/// It extends ChangeNotifier to notify listeners when its state changes (e.g., memorized status).
+class VerbFlashcard extends ChangeNotifier {
+  final String verb;
+  final String sentence;
+  final String tense;
+  final String imageUrl;
+  bool _isMemorized;
+
+  VerbFlashcard({
+    required this.verb,
+    required this.sentence,
+    required this.tense,
+    required this.imageUrl,
+    bool isMemorized = false,
+  }) : _isMemorized = isMemorized;
+
+  bool get isMemorized => _isMemorized;
+
+  /// Toggles the memorized status and notifies listeners.
+  void toggleMemorized() {
+    _isMemorized = !_isMemorized;
+    notifyListeners();
+  }
+
+  /// Returns the appropriate icon based on the tense.
+  IconData get tenseIcon {
+    switch (tense) {
+      case 'Past':
+        return Icons.history;
+      case 'Present':
+        return Icons.wb_sunny;
+      case 'Future':
+        return Icons.event;
+      default:
+        return Icons.help_outline; // Default icon for unknown tense
+    }
+  }
+}
+
+/// The main application widget for the English Verb Flashcards.
+class FlashcardApp extends StatelessWidget {
+  const FlashcardApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // Initial data for the flashcards.
+    final List<VerbFlashcard> flashcards = <VerbFlashcard>[
+      VerbFlashcard(
+        verb: 'Run',
+        sentence: 'I run every morning to stay in shape.',
+        tense: 'Present',
+        imageUrl: 'https://www.gstatic.com/flutter-onestack-prototype/genui/example_1.jpg',
+      ),
+      VerbFlashcard(
+        verb: 'Ran',
+        sentence: 'She ran a marathon last year.',
+        tense: 'Past',
+        imageUrl: 'https://www.gstatic.com/flutter-onestack-prototype/genui/example_1.jpg',
+      ),
+      VerbFlashcard(
+        verb: 'Run',
+        sentence: 'I will run in the park tomorrow morning.',
+        tense: 'Future',
+        imageUrl: 'https://www.gstatic.com/flutter-onestack-prototype/genui/example_1.jpg',
+      ),
+      VerbFlashcard(
+        verb: 'Eat',
+        sentence: 'I eat breakfast every morning.',
+        tense: 'Present',
+        imageUrl: 'https://www.gstatic.com/flutter-onestack-prototype/genui/example_1.jpg',
+      ),
+      VerbFlashcard(
+        verb: 'Ate',
+        sentence: 'She ate all the cake.',
+        tense: 'Past',
+        imageUrl: 'https://www.gstatic.com/flutter-onestack-prototype/genui/example_1.jpg',
+      ),
+    ];
+
+    return MaterialApp(
+      title: 'English Verb Flashcards',
+      theme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: Colors.deepPurple,
+      ),
+      home: Scaffold(
+        appBar: AppBar(title: const Text('English Verb Flashcards')),
+        body: ListView.separated(
+          padding: const EdgeInsets.all(16.0),
+          itemCount: flashcards.length,
+          itemBuilder: (BuildContext context, int index) {
+            // Provide each VerbFlashcard instance to its corresponding FlashcardWidget
+            return ChangeNotifierProvider<VerbFlashcard>.value(
+              value: flashcards[index],
+              builder: (BuildContext context, Widget? child) {
+                return const FlashcardWidget();
+              },
+            );
+          },
+          separatorBuilder: (BuildContext context, int index) => const Divider(
+            height: 32.0, // Space between cards
+            thickness: 1.0,
+            indent: 16.0,
+            endIndent: 16.0,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A widget to display a single flashcard.
+/// It consumes the VerbFlashcard data model using Provider.
+class FlashcardWidget extends StatelessWidget {
+  const FlashcardWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // Watch for changes in the VerbFlashcard data model.
+    final VerbFlashcard flashcard = context.watch<VerbFlashcard>();
+
+    return Card(
+      elevation: flashcard.isMemorized ? 1.0 : 4.0, // Lower elevation if memorized
+      color: flashcard.isMemorized ? Colors.grey[200] : null, // Dim if memorized
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            // Image illustrating the verb
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.network(
+                flashcard.imageUrl,
+                height: 150.0,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return SizedBox(
+                    height: 150,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                  return const SizedBox(
+                    height: 150,
+                    child: Center(
+                      child: Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            // Verb and sentence
+            Text(
+              flashcard.verb,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: flashcard.isMemorized ? Colors.grey[600] : null,
+                  ),
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              flashcard.sentence,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: flashcard.isMemorized ? Colors.grey[600] : null,
+                  ),
+            ),
+            const SizedBox(height: 16.0),
+            // Tense icon and text
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(
+                  flashcard.tenseIcon,
+                  color: flashcard.isMemorized ? Colors.grey : Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8.0),
+                Text(
+                  flashcard.tense,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: flashcard.isMemorized ? Colors.grey[600] : null,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16.0),
+            // "Memorized" button
+            ElevatedButton.icon(
+              onPressed: () {
+                // Toggle the memorized status when the button is pressed.
+                flashcard.toggleMemorized();
+              },
+              icon: Icon(
+                flashcard.isMemorized ? Icons.check_circle : Icons.bookmark_add,
+              ),
+              label: Text(
+                flashcard.isMemorized ? 'Memorizado' : 'Marcar como Memorizado',
+              ),
+              style: ElevatedButton.styleFrom(
+                foregroundColor: flashcard.isMemorized ? Colors.white : null,
+                backgroundColor: flashcard.isMemorized ? Colors.green : null,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
