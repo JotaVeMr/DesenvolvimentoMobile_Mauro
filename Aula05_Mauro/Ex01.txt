@@ -1,0 +1,109 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(CalculadoraApp());
+}
+
+class CalculadoraApp extends StatefulWidget {
+  @override
+  _CalculadoraAppState createState() => _CalculadoraAppState();
+}
+
+class _CalculadoraAppState extends State<CalculadoraApp> {
+  String operador1 = '';
+  String operador2 = '';
+  String resultado = '';
+  bool somaApertada = false;
+
+  void pressionarBotao(String valor) {
+    setState(() {
+      if (valor == '+') {
+        somaApertada = true;
+      } else if (valor == '=') {
+        resultado = (int.parse(operador1) + int.parse(operador2)).toString();
+        operador1 = resultado;
+        operador2 = '';
+        somaApertada = false;
+      } else {
+        if (somaApertada) {
+          operador2 += valor;
+        } else {
+          operador1 += valor;
+        }
+      }
+    });
+
+    
+    print('Operador 1: $operador1');
+    print('Operador 2: $operador2');
+    print('Soma apertado: $somaApertada');
+    print('Resultado: $resultado');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(title: Text('Calculadora Flutter')),
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              'Operador 1: $operador1',
+              style: TextStyle(fontSize: 20),
+            ),
+            Text(
+              'Operador 2: $operador2',
+              style: TextStyle(fontSize: 20),
+            ),
+            Text(
+              'Resultado: $resultado',
+              style: TextStyle(fontSize: 20),
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                buildBotao('7'),
+                buildBotao('8'),
+                buildBotao('9'),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                buildBotao('4'),
+                buildBotao('5'),
+                buildBotao('6'),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                buildBotao('1'),
+                buildBotao('2'),
+                buildBotao('3'),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                buildBotao('0'),
+                buildBotao('+'),
+                buildBotao('='),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildBotao(String valor) {
+    return ElevatedButton(
+      onPressed: () => pressionarBotao(valor),
+      child: Text(valor, style: TextStyle(fontSize: 24)),
+    );
+  }
+}
