@@ -1,0 +1,78 @@
+ import 'dart:math';
+import 'package:flutter/material.dart';
+
+void main() => runApp(JogoApp());
+
+class JogoApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Pedra, Papel ou Tesoura',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: JogoHomePage(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+class JogoHomePage extends StatefulWidget {
+  @override
+  _JogoHomePageState createState() => _JogoHomePageState();
+}
+
+class _JogoHomePageState extends State<JogoHomePage> {
+  // Vetor com as URLs das imagens
+  final List<String> imagens = [
+    'https://t3.ftcdn.net/jpg/01/23/14/80/360_F_123148069_wkgBuIsIROXbyLVWq7YNhJWPcxlamPeZ.jpg', 
+    'https://i.ebayimg.com/00/s/MTIwMFgxNjAw/z/KAcAAOSwTw5bnTbW/\$_57.JPG', 
+    'https://t4.ftcdn.net/jpg/02/55/26/63/360_F_255266320_plc5wjJmfpqqKLh0WnJyLmjc6jFE9vfo.jpg'  
+  ];
+
+  String imagemAtual = '';
+
+  @override
+  void initState() {
+    super.initState();
+    escolherImagem(); 
+  }
+
+  void escolherImagem() {
+    final random = Random();
+    final indice = random.nextInt(imagens.length);
+    setState(() {
+      imagemAtual = imagens[indice];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Pedra, Papel ou Tesoura'),
+        centerTitle: true,
+      ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (imagemAtual.isNotEmpty)
+            Image.network(
+              imagemAtual,
+              width: 300,
+              height: 300,
+              fit: BoxFit.cover,
+            ),
+          SizedBox(height: 30),
+          ElevatedButton(
+            onPressed: escolherImagem,
+            child: Text('Escolher', style: TextStyle(fontSize: 20)),
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

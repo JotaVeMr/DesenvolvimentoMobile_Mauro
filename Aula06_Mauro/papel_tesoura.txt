@@ -1,0 +1,144 @@
+import 'dart:math';
+import 'package:flutter/material.dart';
+
+void main() => runApp(JogoApp());
+
+class JogoApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Pedra, Papel ou Tesoura',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: JogoHomePage(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+class JogoHomePage extends StatefulWidget {
+  @override
+  _JogoHomePageState createState() => _JogoHomePageState();
+}
+
+class _JogoHomePageState extends State<JogoHomePage> {
+  final List<String> opcoes = ['Pedra', 'Papel', 'Tesoura'];
+  final Map<String, String> imagens = {
+    'Pedra':
+        'https://t3.ftcdn.net/jpg/01/23/14/80/360_F_123148069_wkgBuIsIROXbyLVWq7YNhJWPcxlamPeZ.jpg',
+    'Papel':
+        'https://i.ebayimg.com/00/s/MTIwMFgxNjAw/z/KAcAAOSwTw5bnTbW/\$_57.JPG',
+    'Tesoura':
+        'https://t4.ftcdn.net/jpg/02/55/26/63/360_F_255266320_plc5wjJmfpqqKLh0WnJyLmjc6jFE9vfo.jpg'
+  };
+
+  String escolhaUsuario = '';
+  String escolhaMaquina = '';
+  String resultado = '';
+  int contadorJogadas = 0;
+
+  void jogar(String escolhaDoUsuario) {
+    setState(() {
+      escolhaUsuario = escolhaDoUsuario;
+      contadorJogadas++;
+
+      
+      if (contadorJogadas % 5 == 0) {
+        
+        escolhaMaquina = _perdePara(escolhaDoUsuario);
+        resultado = 'Você ganhou!';
+      } else {
+        
+        final random = Random();
+        escolhaMaquina = opcoes[random.nextInt(3)];
+        resultado = _definirResultado(escolhaUsuario, escolhaMaquina);
+      }
+    });
+  }
+
+  String _definirResultado(String usuario, String maquina) {
+    if (usuario == maquina) return 'Empate!';
+    if ((usuario == 'Pedra' && maquina == 'Tesoura') ||
+        (usuario == 'Papel' && maquina == 'Pedra') ||
+        (usuario == 'Tesoura' && maquina == 'Papel')) {
+      return 'Você ganho, monstro!';
+    } else {
+      return 'A máquina ganhou,seu horrivel!';
+    }
+  }
+
+  String _perdePara(String escolha) {
+    switch (escolha) {
+      case 'Pedra':
+        return 'Tesoura'; 
+      case 'Papel':
+        return 'Pedra'; 
+      case 'Tesoura':
+        return 'Papel'; 
+      default:
+        return '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Pedra, Papel ou Tesoura'),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Escolha uma opção:',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: opcoes.map((opcao) {
+                return Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () => jogar(opcao),
+                      child: Image.network(
+                        imagens[opcao]!,
+                        width: 80,
+                        height: 80,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(opcao),
+                  ],
+                );
+              }).toList(),
+            ),
+            SizedBox(height: 40),
+            if (escolhaUsuario.isNotEmpty && escolhaMaquina.isNotEmpty) ...[
+              Text(
+                'Você escolheu:',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              Image.network(imagens[escolhaUsuario]!, width: 100, height: 100),
+              SizedBox(height: 20),
+              Text(
+                'Máquina escolheu:',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              Image.network(imagens[escolhaMaquina]!, width: 100, height: 100),
+              SizedBox(height: 30),
+              Text(
+                resultado,
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+            ]
+          ],
+        ),
+      ),
+    );
+  }
+}
