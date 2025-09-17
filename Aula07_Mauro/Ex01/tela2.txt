@@ -1,0 +1,24 @@
+// tela_resultado.dart
+import 'package:flutter/material.dart';
+import 'dart:math';
+
+class TelaResultado extends StatelessWidget {
+  final double raio;
+
+  const TelaResultado({required this.raio, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    double area = pi * pow(raio, 2);
+
+    return Scaffold(
+      appBar: AppBar(title: Text('Resultado')),
+      body: Center(
+        child: Text(
+          'Área = ${area.toStringAsFixed(2)}',
+          style: TextStyle(fontSize: 24),
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,41 @@
+// tela_entrada.dart
+import 'package:flutter/material.dart';
+import 'tela_resultado.dart';
+
+class TelaEntrada extends StatelessWidget {
+  final TextEditingController _controller = TextEditingController();
+
+  TelaEntrada({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Digite o raio')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _controller,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: 'Raio do círculo'),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                double raio = double.tryParse(_controller.text) ?? 0;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TelaResultado(raio: raio),
+                  ),
+                );
+              },
+              child: Text('Calcular Área'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
