@@ -1,0 +1,187 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Quiz de Conhecimentos Gerais',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: const QuizScreen(),
+    );
+  }
+}
+
+class QuizScreen extends StatefulWidget {
+  const QuizScreen({super.key});
+
+  @override
+  _QuizScreenState createState() => _QuizScreenState();
+}
+
+class _QuizScreenState extends State<QuizScreen> {
+  int _currentQuestionIndex = 0; 
+  int _score = 0; 
+  bool _quizCompleted = false; 
+
+  // Perguntas e opções
+  final List<Map<String, dynamic>> _questions = [
+    {
+      'question': 'Qual é a capital do Brasil?',
+      'options': ['São Paulo', 'Brasília', 'Rio de Janeiro', 'Salvador'],
+      'correctAnswer': 1
+    },
+    {
+      'question': 'Em que ano foi proclamada a Independência do Brasil?',
+      'options': ['1822', '1889', '1500', '1930'],
+      'correctAnswer': 0
+    },
+    {
+      'question': 'Quem foi o primeiro presidente do Brasil?',
+      'options': ['Getúlio Vargas', 'Juscelino Kubitschek', 'Marechal Deodoro', 'Fernando Henrique Cardoso'],
+      'correctAnswer': 2
+    },
+    {
+      'question': 'Qual é o maior país do mundo em área territorial?',
+      'options': ['China', 'Estados Unidos', 'Canadá', 'Rússia'],
+      'correctAnswer': 3
+    },
+    {
+      'question': 'Qual é o maior continente?',
+      'options': ['América', 'África', 'Ásia', 'Europa'],
+      'correctAnswer': 2
+    },
+    {
+      'question': 'Quem pintou o quadro "Mona Lisa"?',
+      'options': ['Vincent van Gogh', 'Leonardo da Vinci', 'Pablo Picasso', 'Claude Monet'],
+      'correctAnswer': 1
+    },
+    {
+      'question': 'Qual é o planeta mais próximo do Sol?',
+      'options': ['Terra', 'Marte', 'Mercúrio', 'Vênus'],
+      'correctAnswer': 2
+    },
+    {
+      'question': 'Qual é o maior oceano do mundo?',
+      'options': ['Atlântico', 'Pacífico', 'Índico', 'Ártico'],
+      'correctAnswer': 1
+    },
+    {
+      'question': 'Qual o país mais populoso do mundo?',
+      'options': ['Índia', 'China', 'Estados Unidos', 'Brasil'],
+      'correctAnswer': 1
+    },
+    {
+      'question': 'Quual o maior jogador da historio do futebol?',
+      'options': ['Messi', 'Cr7', 'Pelé', 'Joao Vitor Ribeiro'],
+      'correctAnswer': 3
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadState();
+  }
+
+  
+  void _loadState() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _currentQuestionIndex = prefs.getInt('currentQuestionIndex') ?? 0;
+      _score = prefs.getInt('score') ?? 0;
+      _quizCompleted = prefs.getBool('quizCompleted') ?? false;
+    });
+  }
+
+  
+  void _saveState() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('currentQuestionIndex', _currentQuestionIndex);
+    prefs.setInt('score', _score);
+    prefs.setBool('quizCompleted', _quizCompleted);
+  }
+
+  
+  void _checkAnswer(int selectedOption) {
+    if (_quizCompleted) return;
+
+    if (selectedOption == _questions[_currentQuestionIndex]['correctAnswer']) {
+      _score++;
+    }
+
+    if (_currentQuestionIndex < _questions.length - 1) {
+      _currentQuestionIndex++;
+    } else {
+      _quizCompleted = true;
+    }
+
+    _saveState();
+    setState(() {});
+  }
+
+  // Resetar o quiz
+  void _resetQuiz() {
+    setState(() {
+      _currentQuestionIndex = 0;
+      _score = 0;
+      _quizCompleted = false;
+    });
+    _saveState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Quiz de Conhecimentos Gerais'),
+      ),
+      body: _quizCompleted
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Você completou o quiz!', style: Theme.of(context).textTheme.headline4),
+                  Text('Sua pontuação: $_score/${_questions.length}',
+                      style: Theme.of(context).textTheme.headline6),
+                  ElevatedButton(
+                    onPressed: _resetQuiz,
+                    child: const Text('Recomeçar'),
+                  ),
+                ],
+              ),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _questions[_currentQuestionIndex]['question'],
+                    style: Theme.of(context).textTheme.headline5,
+                  ),
+                  const SizedBox(height: 20),
+                  ...List.generate(
+                    _questions[_currentQuestionIndex]['options'].length,
+                    (index) {
+                      return ElevatedButton(
+                        onPressed: () => _checkAnswer(index),
+                        child: Text(_questions[_currentQuestionIndex]['options'][index]),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+}
