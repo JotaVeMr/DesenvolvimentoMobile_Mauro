@@ -1,0 +1,116 @@
+import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+void main() {
+  runApp(const MainApp());
+}
+
+class Localizacao {
+  double? latitude;
+  double? longitude;
+
+  // Método para obter a localização atual
+  Future<void> pegaLocalizacaoAtual() async {
+    LocationPermission permission = await Geolocator.requestPermission();
+
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      throw Exception("Permissão de localização negada");
+    }
+
+    Position posicao = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    latitude = posicao.latitude;
+    longitude = posicao.longitude;
+  }
+}
+
+class MainApp extends StatefulWidget {
+  const MainApp({super.key});
+
+  @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  Localizacao localizacao = Localizacao();
+  String temperatura = "?";
+  String umidade = "?";
+  String velocidadeVento = "?";
+  String status = "Carregando...";
+
+  @override
+  void initState() {
+    super.initState();
+    _obterLocalizacao();
+  }
+
+  
+  Future<void> _obterClima() async {
+    String apiKey = "8b7af499856dcfe8edf362447bf2ed12"; 
+    String url =
+        "https://api.openweathermap.org/data/2.5/weather?lat=${localizacao.latitude}&lon=${localizacao.longitude}&appid=$apiKey&units=metric&lang=pt_br";
+
+    try {
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          temperatura = "${data['main']['temp']}°C";
+          umidade = "${data['main']['humidity']}%";
+          velocidadeVento = "${data['wind']['speed']} m/s";
+          status = "Clima Atual";
+        });
+      } else {
+        setState(() {
+          status = "Erro ao buscar clima";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        status = "Erro na conexão";
+      });
+    }
+  }
+
+  
+  Future<void> _obterLocalizacao() async {
+    try {
+      await localizacao.pegaLocalizacaoAtual();
+      _obterClima();
+    } catch (e) {
+      setState(() {
+        status = "Erro ao obter localização";
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(title: const Text("Clima Atual")),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                status,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              Text('Temperatura: $temperatura'),
+              Text('Umidade: $umidade'),
+              Text('Velocidade do Vento: $velocidadeVento'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
