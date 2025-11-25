@@ -1,0 +1,326 @@
+import 'package:flutter/material.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart' as p;
+
+void main() {
+  runApp(const ToDoApp());
+}
+
+class ToDoApp extends StatelessWidget {
+  const ToDoApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: const HomePage(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+
+class Task {
+  int? id;
+  String title;
+  String date;
+  bool done;
+
+  Task({this.id, required this.title, required this.date, this.done = false});
+
+  factory Task.fromMap(Map<String, dynamic> map) => Task(
+        id: map["id"],
+        title: map["title"],
+        date: map["date"],
+        done: map["done"] == 1,
+      );
+
+  Map<String, dynamic> toMap() => {
+        "id": id,
+        "title": title,
+        "date": date,
+        "done": done ? 1 : 0,
+      };
+}
+
+
+class DatabaseHelper {
+  static final DatabaseHelper instance = DatabaseHelper._internal();
+  DatabaseHelper._internal();
+
+  Database? _db;
+
+  Future<Database> get database async {
+    if (_db != null) return _db!;
+    return await initDB();
+  }
+
+  Future<Database> initDB() async {
+    final path = p.join(await getDatabasesPath(), "tasks.db");
+
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute("""
+        CREATE TABLE tasks(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT,
+          date TEXT,
+          done INTEGER
+        );
+        """);
+      },
+    );
+  }
+
+  Future<int> insertTask(Task task) async {
+    final db = await database;
+    return await db.insert("tasks", task.toMap());
+  }
+
+  Future<List<Task>> getAllTasks() async {
+    final db = await database;
+    final res = await db.query("tasks", orderBy: "date ASC");
+    return res.map((x) => Task.fromMap(x)).toList();
+  }
+
+  Future<List<Task>> getTasksByDate(String date) async {
+    final db = await database;
+    final res = await db.query(
+      "tasks",
+      where: "date = ?",
+      whereArgs: [date],
+    );
+    return res.map((x) => Task.fromMap(x)).toList();
+  }
+
+  Future<int> updateTask(Task task) async {
+    final db = await database;
+    return await db.update(
+      "tasks",
+      task.toMap(),
+      where: "id = ?",
+      whereArgs: [task.id],
+    );
+  }
+
+  Future<int> toggleDone(Task task) async {
+    final db = await database;
+    return await db.update(
+      "tasks",
+      {"done": task.done ? 0 : 1},
+      where: "id = ?",
+      whereArgs: [task.id],
+    );
+  }
+}
+
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<Task> tasks = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadTasks();
+  }
+
+  Future loadTasks() async {
+    tasks = await DatabaseHelper.instance.getAllTasks();
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Lista de Tarefas"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_month),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TasksByDatePage()),
+              );
+            },
+          ),
+        ],
+      ),
+      body: tasks.isEmpty
+          ? const Center(child: Text("Nenhuma tarefa cadastrada"))
+          : ListView.builder(
+              itemCount: tasks.length,
+              itemBuilder: (_, i) {
+                final t = tasks[i];
+                return ListTile(
+                  title: Text(
+                    t.title,
+                    style: TextStyle(
+                      decoration: t.done ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+                  subtitle: Text("Data: ${t.date}"),
+                  leading: Checkbox(
+                    value: t.done,
+                    onChanged: (_) async {
+                      await DatabaseHelper.instance.toggleDone(t);
+                      loadTasks();
+                    },
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => TaskFormPage(task: t),
+                        ),
+                      );
+                      loadTasks();
+                    },
+                  ),
+                );
+              },
+            ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.add),
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => TaskFormPage()),
+          );
+          loadTasks();
+        },
+      ),
+    );
+  }
+}
+
+
+class TaskFormPage extends StatefulWidget {
+  final Task? task;
+  const TaskFormPage({super.key, this.task});
+
+  @override
+  State<TaskFormPage> createState() => _TaskFormPageState();
+}
+
+class _TaskFormPageState extends State<TaskFormPage> {
+  final titleController = TextEditingController();
+  final dateController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.task != null) {
+      titleController.text = widget.task!.title;
+      dateController.text = widget.task!.date;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Tarefa")),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(labelText: "Título"),
+            ),
+            TextField(
+              controller: dateController,
+              decoration: const InputDecoration(labelText: "Data (AAAA-MM-DD)"),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                if (widget.task == null) {
+                  await DatabaseHelper.instance.insertTask(
+                    Task(
+                      title: titleController.text,
+                      date: dateController.text,
+                    ),
+                  );
+                } else {
+                  await DatabaseHelper.instance.updateTask(
+                    Task(
+                      id: widget.task!.id,
+                      title: titleController.text,
+                      date: dateController.text,
+                      done: widget.task!.done,
+                    ),
+                  );
+                }
+                Navigator.pop(context);
+              },
+              child: const Text("Salvar"),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+class TasksByDatePage extends StatefulWidget {
+  const TasksByDatePage({super.key});
+
+  @override
+  State<TasksByDatePage> createState() => _TasksByDatePageState();
+}
+
+class _TasksByDatePageState extends State<TasksByDatePage> {
+  final dateController = TextEditingController();
+  List<Task> tasks = [];
+
+  Future search() async {
+    tasks = await DatabaseHelper.instance.getTasksByDate(dateController.text);
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Tarefas por Data")),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: dateController,
+              decoration: const InputDecoration(labelText: "Data (AAAA-MM-DD)"),
+            ),
+            ElevatedButton(
+              onPressed: search,
+              child: const Text("Buscar"),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: tasks.length,
+                itemBuilder: (_, i) {
+                  final t = tasks[i];
+                  return ListTile(
+                    title: Text(t.title),
+                    subtitle: Text("Data: ${t.date}"),
+                  );
+                },
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
