@@ -4,9 +4,7 @@ void main() {
   runApp(const AlunoApp());
 }
 
-// ----------------------------
-// APP PRINCIPAL
-// ----------------------------
+
 class AlunoApp extends StatelessWidget {
   const AlunoApp({super.key});
 
@@ -116,7 +114,7 @@ class _TelaNotasState extends State<TelaNotas> {
                 style: const TextStyle(fontSize: 20)),
             const SizedBox(height: 20),
 
-            // Campo para adicionar nota
+            
             TextField(
               controller: notaController,
               keyboardType: TextInputType.number,
@@ -172,7 +170,7 @@ class _TelaNotasState extends State<TelaNotas> {
             ),
             const SizedBox(height: 20),
 
-            // Listagem rápida das notas adicionadas
+            
             Expanded(
               child: ListView.builder(
                 itemCount: notas.length,
@@ -217,7 +215,7 @@ class TelaVisualizacao extends StatelessWidget {
             const Text("Notas:", style: TextStyle(fontSize: 20)),
             const SizedBox(height: 10),
 
-            // ListView com as notas
+            
             Expanded(
               child: ListView.builder(
                 itemCount: notas.length,
@@ -235,3 +233,4 @@ class TelaVisualizacao extends StatelessWidget {
     );
   }
 }
+
