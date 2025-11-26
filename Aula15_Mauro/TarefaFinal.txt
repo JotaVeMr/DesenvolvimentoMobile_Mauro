@@ -1,0 +1,344 @@
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+//import 'package:audioplayers/audioplayers.dart';
+
+void main() {
+  runApp(const EnglishHelperApp());
+}
+
+class EnglishHelperApp extends StatelessWidget {
+  const EnglishHelperApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'English Helper',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const HomePage(),
+    );
+  }
+}
+
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final TextEditingController urlController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("English Helper"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.list_alt),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const PalavrasCompreendidasPage(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const Text(
+              "Cole o link da Wikipedia (em inglês):",
+              style: TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: urlController,
+              decoration: const InputDecoration(
+                  border: OutlineInputBorder(), hintText: "https://en.wikipedia.org/wiki/..."),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                String url = urlController.text.trim();
+                if (url.isNotEmpty) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TextPage(wikiUrl: url),
+                    ),
+                  );
+                }
+              },
+              child: const Text("Carregar texto"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+class PalavrasCompreendidas {
+  static final List<String> _palavras = [];
+
+  static List<String> get palavras => _palavras;
+
+  static void marcar(String palavra) {
+    if (!_palavras.contains(palavra)) {
+      _palavras.add(palavra);
+    }
+  }
+
+  static void desmarcar(String palavra) {
+    _palavras.remove(palavra);
+  }
+
+  static bool estaCompreendida(String palavra) {
+    return _palavras.contains(palavra);
+  }
+}
+
+
+class TextPage extends StatefulWidget {
+  final String wikiUrl;
+  const TextPage({super.key, required this.wikiUrl});
+
+  @override
+  State<TextPage> createState() => _TextPageState();
+}
+
+class _TextPageState extends State<TextPage> {
+  String primeiroParagrafo = "";
+  bool carregando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchWikipediaText();
+  }
+
+  Future<void> fetchWikipediaText() async {
+    try {
+      
+      final apiUrl =
+          widget.wikiUrl.replaceAll("https://en.wikipedia.org/wiki/", "");
+      final response = await http.get(Uri.parse(
+          'https://en.wikipedia.org/api/rest_v1/page/summary/$apiUrl'));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          primeiroParagrafo = data['extract'] ?? "Texto não encontrado";
+          carregando = false;
+        });
+      } else {
+        setState(() {
+          primeiroParagrafo = "Erro ao carregar o texto";
+          carregando = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        primeiroParagrafo = "Erro: $e";
+        carregando = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List<String> palavras =
+        primeiroParagrafo.split(RegExp(r"\s+")).map((e) => e.replaceAll(RegExp(r'[^\w]'), '')).toList();
+
+    return Scaffold(
+      appBar: AppBar(title: const Text("Texto Wikipedia")),
+      body: carregando
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(20),
+              child: SingleChildScrollView(
+                child: Wrap(
+                  spacing: 5,
+                  runSpacing: 5,
+                  children: palavras.map((palavra) {
+                    if (palavra.isEmpty) return const SizedBox.shrink();
+                    bool compreendida =
+                        PalavrasCompreendidas.estaCompreendida(palavra);
+                    return GestureDetector(
+                      onTap: compreendida
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      DefinitionPage(word: palavra),
+                                ),
+                              ).then((_) => setState(() {}));
+                            },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 5, horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: compreendida
+                              ? Colors.grey[300]
+                              : Colors.blue[100],
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(palavra),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+
+class DefinitionPage extends StatefulWidget {
+  final String word;
+  const DefinitionPage({super.key, required this.word});
+
+  @override
+  State<DefinitionPage> createState() => _DefinitionPageState();
+}
+
+class _DefinitionPageState extends State<DefinitionPage> {
+  String definition = "";
+  String? audioUrl;
+  bool carregando = true;
+  //final player = AudioPlayer();
+
+  @override
+  void initState() {
+    super.initState();
+    fetchDefinition();
+  }
+
+  Future<void> fetchDefinition() async {
+    try {
+      final url =
+          'https://api.dictionaryapi.dev/api/v2/entries/en/${widget.word.toLowerCase()}';
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final meanings = data[0]['meanings'];
+        final defList = meanings[0]['definitions'];
+        setState(() {
+          definition = defList[0]['definition'] ?? "Definição não encontrada";
+
+          // Áudio
+          final phonetics = data[0]['phonetics'];
+          audioUrl = phonetics.isNotEmpty ? phonetics[0]['audio'] : null;
+          carregando = false;
+        });
+      } else {
+        setState(() {
+          definition = "Definição não encontrada";
+          carregando = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        definition = "Erro: $e";
+        carregando = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    //player.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.word)),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: carregando
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Definição:",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(definition, style: const TextStyle(fontSize: 18)),
+                  const SizedBox(height: 20),
+                  if (audioUrl != null && audioUrl!.isNotEmpty)
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        //player.play(UrlSource(audioUrl!));
+                      },
+                      icon: const Icon(Icons.volume_up),
+                      label: const Text("Ouvir pronúncia"),
+                    ),
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                    onPressed: () {
+                      PalavrasCompreendidas.marcar(widget.word);
+                      Navigator.pop(context);
+                    },
+                    child: const Text("Marcar como compreendida"),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+
+class PalavrasCompreendidasPage extends StatefulWidget {
+  const PalavrasCompreendidasPage({super.key});
+
+  @override
+  State<PalavrasCompreendidasPage> createState() =>
+      _PalavrasCompreendidasPageState();
+}
+
+class _PalavrasCompreendidasPageState extends State<PalavrasCompreendidasPage> {
+  @override
+  Widget build(BuildContext context) {
+    final palavras = PalavrasCompreendidas.palavras;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text("Palavras Compreendidas")),
+      body: ListView.builder(
+        itemCount: palavras.length,
+        itemBuilder: (context, index) {
+          final palavra = palavras[index];
+          return ListTile(
+            title: Text(palavra),
+            trailing: IconButton(
+              icon: const Icon(Icons.undo),
+              onPressed: () {
+                setState(() {
+                  PalavrasCompreendidas.desmarcar(palavra);
+                });
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
