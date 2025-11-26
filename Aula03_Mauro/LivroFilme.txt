@@ -1,0 +1,159 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MeuPersonagemApp());
+}
+
+
+class MeuPersonagemApp extends StatelessWidget {
+  const MeuPersonagemApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Personagem Joao',
+      theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        useMaterial3: true,
+      ),
+      debugShowCheckedModeBanner: false,
+      home: const PaginaInicial(),
+    );
+  }
+}
+
+
+class PaginaInicial extends StatelessWidget {
+  const PaginaInicial({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Meu Personagem')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+          child: Column(
+            children: [
+              // Foto do personagem
+              CircleAvatar(
+                radius: 70,
+                backgroundImage: NetworkImage(
+                  'https://cdn-icons-png.flaticon.com/512/147/147144.png',
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Nome e idade
+              const Text(
+                'Joao Vitor',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Idade: 90 anos',
+                style: TextStyle(fontSize: 20),
+              ),
+              const SizedBox(height: 40),
+
+              // Botões Filmes e Livros
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.movie),
+                    label: const Text('Filmes'),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const PaginaFilmes()),
+                      );
+                    },
+                  ),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.book),
+                    label: const Text('Livros'),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const PaginaLivros()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+class PaginaFilmes extends StatelessWidget {
+  const PaginaFilmes({super.key});
+
+  final List<String> filmes = const [
+    'O Senhor dos Anéis',
+    'Star Wars',
+    'Matrix',
+    'Clube da Luta',
+    'Interestelar',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Filmes Favoritos')),
+      body: ListView.builder(
+        itemCount: filmes.length,
+        itemBuilder: (context, index) {
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ListTile(
+              leading: const Icon(Icons.movie, color: Colors.deepPurple),
+              title: Text(filmes[index],
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w500)),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+
+class PaginaLivros extends StatelessWidget {
+  const PaginaLivros({super.key});
+
+  final List<String> livros = const [
+    'Dom Quixote',
+    '1984',
+    'O Pequeno Príncipe',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Livros Favoritos')),
+      body: ListView.builder(
+        itemCount: livros.length,
+        itemBuilder: (context, index) {
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ListTile(
+              leading: const Icon(Icons.book, color: Colors.deepPurple),
+              title: Text(livros[index],
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w500)),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
