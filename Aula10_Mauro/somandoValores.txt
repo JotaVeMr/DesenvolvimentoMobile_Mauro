@@ -1,0 +1,139 @@
+ import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: const TelaAjuste(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+
+class TelaAjuste extends StatefulWidget {
+  const TelaAjuste({super.key});
+
+  @override
+  State<TelaAjuste> createState() => _TelaAjusteState();
+}
+
+class _TelaAjusteState extends State<TelaAjuste> {
+  int op1 = 0;
+  int op2 = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Somador')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text("Operador 1", style: TextStyle(fontSize: 20)),
+            Text("$op1", style: const TextStyle(fontSize: 30)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => setState(() => op1--),
+                  icon: const Icon(Icons.remove),
+                ),
+                IconButton(
+                  onPressed: () => setState(() => op1++),
+                  icon: const Icon(Icons.add),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 30),
+
+            const Text("Operador 2", style: TextStyle(fontSize: 20)),
+            Text("$op2", style: const TextStyle(fontSize: 30)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  onPressed: () => setState(() => op2--),
+                  icon: const Icon(Icons.remove),
+                ),
+                IconButton(
+                  onPressed: () => setState(() => op2++),
+                  icon: const Icon(Icons.add),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 40),
+
+            ElevatedButton(
+              onPressed: () {
+                int resultado = op1 + op2;
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => Resultado(
+                      op1: op1,
+                      op2: op2,
+                      resultado: resultado,
+                    ),
+                  ),
+                );
+              },
+              child: const Text("Somar"),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+class Resultado extends StatelessWidget {
+  final int op1;
+  final int op2;
+  final int resultado;
+
+  const Resultado({
+    super.key,
+    required this.op1,
+    required this.op2,
+    required this.resultado,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Resultado")),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "$op1 + $op2 = $resultado",
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 40),
+
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Voltar"),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
