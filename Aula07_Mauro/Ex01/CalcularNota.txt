@@ -1,0 +1,237 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const AlunoApp());
+}
+
+// ----------------------------
+// APP PRINCIPAL
+// ----------------------------
+class AlunoApp extends StatelessWidget {
+  const AlunoApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Cadastro de Aluno',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(primarySwatch: Colors.teal),
+      home: const TelaCadastro(),
+    );
+  }
+}
+
+
+class TelaCadastro extends StatefulWidget {
+  const TelaCadastro({super.key});
+
+  @override
+  State<TelaCadastro> createState() => _TelaCadastroState();
+}
+
+class _TelaCadastroState extends State<TelaCadastro> {
+  final TextEditingController nomeController = TextEditingController();
+  final TextEditingController matriculaController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Cadastro do Aluno")),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            TextField(
+              controller: nomeController,
+              decoration: const InputDecoration(
+                labelText: "Nome do aluno",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: matriculaController,
+              decoration: const InputDecoration(
+                labelText: "Matrícula",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: () {
+                String nome = nomeController.text.trim();
+                String matricula = matriculaController.text.trim();
+
+                if (nome.isEmpty || matricula.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Preencha todos os campos")),
+                  );
+                  return;
+                }
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TelaNotas(
+                      nome: nome,
+                      matricula: matricula,
+                    ),
+                  ),
+                );
+              },
+              child: const Text("Cadastrar Aluno"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+class TelaNotas extends StatefulWidget {
+  final String nome;
+  final String matricula;
+
+  const TelaNotas({super.key, required this.nome, required this.matricula});
+
+  @override
+  State<TelaNotas> createState() => _TelaNotasState();
+}
+
+class _TelaNotasState extends State<TelaNotas> {
+  final TextEditingController notaController = TextEditingController();
+  final List<double> notas = [];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Lançar Notas")),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Text("Aluno: ${widget.nome}", style: const TextStyle(fontSize: 20)),
+            Text("Matrícula: ${widget.matricula}",
+                style: const TextStyle(fontSize: 20)),
+            const SizedBox(height: 20),
+
+            // Campo para adicionar nota
+            TextField(
+              controller: notaController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: "Digite a nota",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    double? nota = double.tryParse(notaController.text);
+                    if (nota == null || nota < 0 || nota > 10) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text("Digite uma nota válida (0-10)")),
+                      );
+                      return;
+                    }
+
+                    setState(() {
+                      notas.add(nota);
+                      notaController.clear();
+                    });
+                  },
+                  child: const Text("Adicionar Nota"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (notas.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Nenhuma nota lançada")),
+                      );
+                      return;
+                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => TelaVisualizacao(
+                          nome: widget.nome,
+                          matricula: widget.matricula,
+                          notas: notas,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text("Visualizar Notas"),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Listagem rápida das notas adicionadas
+            Expanded(
+              child: ListView.builder(
+                itemCount: notas.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    leading: const Icon(Icons.check),
+                    title: Text("Nota ${index + 1}: ${notas[index]}"),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+class TelaVisualizacao extends StatelessWidget {
+  final String nome;
+  final String matricula;
+  final List<double> notas;
+
+  const TelaVisualizacao(
+      {super.key,
+      required this.nome,
+      required this.matricula,
+      required this.notas});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Notas do Aluno")),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Text("Aluno: $nome", style: const TextStyle(fontSize: 22)),
+            Text("Matrícula: $matricula", style: const TextStyle(fontSize: 22)),
+            const SizedBox(height: 20),
+            const Text("Notas:", style: TextStyle(fontSize: 20)),
+            const SizedBox(height: 10),
+
+            // ListView com as notas
+            Expanded(
+              child: ListView.builder(
+                itemCount: notas.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    leading: const Icon(Icons.star, color: Colors.amber),
+                    title: Text("Nota ${index + 1}: ${notas[index]}"),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
